@@ -1,0 +1,32 @@
+{
+  "name": "ecomdev-payments",
+  "version": "1.0.0",
+  "description": "Мини-учёт оплат учебного центра: API + мобильная веб-страница должников",
+  "scripts": {
+    "dev": "TZ=${TZ:-Asia/Tashkent} tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "TZ=${TZ:-Asia/Tashkent} node dist/src/server.js",
+    "seed": "TZ=${TZ:-Asia/Tashkent} tsx scripts/seed.ts",
+    "test": "TZ=Asia/Tashkent vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fastify/static": "^10.1.7",
+    "better-sqlite3": "^13.0.3",
+    "fastify": "^5.12.7",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.5",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.12"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
