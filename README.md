@@ -9,7 +9,7 @@ REST API для учеников и оплат, отчёт «должники з
 Нужен **Node.js 20+** и npm.
 
 ```bash
-git clone <repo-url> ecomdev-payments
+git clone https://github.com/akmal-k/ecomdev-payments.git
 cd ecomdev-payments
 npm install
 npm run seed   # необязательно: 6 демо-учеников с оплатами за текущий месяц
