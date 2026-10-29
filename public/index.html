@@ -3,185 +3,592 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0f766e">
-  <title>Оплаты · Должники</title>
+  <meta name="theme-color" content="#16203a">
+  <title>Учёт оплат</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f4f5f7; --card: #fff; --text: #111827; --muted: #6b7280; --line: #e5e7eb;
-      --accent: #0f766e; --accent-ink: #fff; --debt: #b91c1c; --ok: #15803d;
+      --bg: #eceff4; --surface: #fff; --ink: #16203a; --muted: #5d6680; --line: #dce1ea;
+      --brand: #2350c4; --brand-ink: #fff; --brand-soft: #e3eafb;
+      --debt: #c42b3a; --debt-soft: #f6dfe2; --paid: #1d8a5a;
+      --head: #16203a; --head-ink: #fff; --head-muted: #a9b3cf;
+      color-scheme: light;
     }
     @media (prefers-color-scheme: dark) {
-      :root { --bg: #0b0f14; --card: #151b23; --text: #e5e7eb; --muted: #9ca3af; --line: #263040;
-              --accent: #14b8a6; --accent-ink: #062320; --debt: #f87171; --ok: #4ade80; }
+      :root {
+        --bg: #0e1322; --surface: #171e31; --ink: #e8ecf6; --muted: #97a1bb; --line: #273150;
+        --brand: #7a9dff; --brand-ink: #0b1430; --brand-soft: #1e2a4d;
+        --debt: #ff7a86; --debt-soft: #3a2230; --paid: #4fd39a;
+        --head: #070b17; --head-ink: #fff; --head-muted: #8a94b3;
+        color-scheme: dark;
+      }
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--text);
-           font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-    main { max-width: 560px; margin: 0 auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); }
-    h1 { font-size: 22px; margin: 4px 0 12px; }
-    h2 { font-size: 17px; margin: 0 0 12px; }
-    section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-    .row { display: flex; gap: 12px; align-items: end; }
-    .row > * { flex: 1; min-width: 0; }
-    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
-    input, select, button { font: inherit; width: 100%; min-height: 44px; border-radius: 10px; }
-    input, select { padding: 8px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
-    input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-    button { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; cursor: pointer; }
-    button:disabled { opacity: .6; }
-    .field { margin-bottom: 12px; }
-    .total { text-align: right; }
-    .total b { display: block; font-size: 20px; color: var(--debt); }
-    ul { list-style: none; margin: 0; padding: 0; }
-    li button { all: unset; box-sizing: border-box; width: 100%; display: flex; justify-content: space-between; gap: 12px;
-                padding: 12px 0; border-top: 1px solid var(--line); cursor: pointer; }
-    li:first-child button { border-top: 0; }
-    li button:focus-visible { outline: 2px solid var(--accent); border-radius: 8px; }
-    .who { min-width: 0; }
-    .who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .who small { display: block; color: var(--muted); font-size: 13px; }
-    .sum { text-align: right; white-space: nowrap; }
-    .sum b { color: var(--debt); display: block; }
-    .empty { color: var(--muted); text-align: center; padding: 16px 0; }
-    .msg { margin: 12px 0 0; font-size: 14px; min-height: 1.4em; }
-    .msg.ok { color: var(--ok); } .msg.err { color: var(--debt); }
-    .hint { color: var(--muted); font-size: 13px; margin: -4px 0 12px; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font: 16px/1.45 Onest, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-variant-numeric: tabular-nums; -webkit-tap-highlight-color: transparent;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    .wrap { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+
+    /* Header: month switcher + month summary */
+    header { background: var(--head); color: var(--head-ink); padding: calc(12px + env(safe-area-inset-top)) 0 20px; }
+    .month { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .month h1 { margin: 0; font-size: 20px; font-weight: 600; text-align: center; flex: 1; }
+    .month button {
+      width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgb(255 255 255 / .08);
+      color: var(--head-ink); font-size: 22px; line-height: 1; cursor: pointer;
+    }
+    .month button:disabled { opacity: .3; cursor: default; }
+    .summary { margin-top: 16px; }
+    .summary .label { color: var(--head-muted); font-size: 14px; }
+    .summary .total { font-size: 34px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; }
+    .summary .total small { font-size: 18px; font-weight: 500; color: var(--head-muted); }
+    .summary .sub { color: var(--head-muted); font-size: 14px; margin-top: 4px; }
+
+    /* Tabs */
+    .tabs { position: sticky; top: 0; z-index: 5; background: var(--bg); padding: 12px 0 8px; }
+    .seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--line); border-radius: 12px; padding: 3px; }
+    .seg button { border: 0; background: none; min-height: 40px; border-radius: 10px; font-weight: 600; color: var(--muted); cursor: pointer; }
+    .seg button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(22 32 58 / .12); }
+
+    main { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+    .list { list-style: none; margin: 0; padding: 0; }
+    .card { background: var(--surface); border-radius: 16px; overflow: hidden; }
+    .group-name { font-size: 14px; font-weight: 600; color: var(--muted); margin: 20px 4px 8px; }
+
+    /* Debtor rows: the paid/fee bar is the main visual */
+    .row {
+      all: unset; box-sizing: border-box; display: block; width: 100%; padding: 14px 16px; cursor: pointer;
+      border-top: 1px solid var(--line);
+    }
+    li:first-child > .row { border-top: 0; }
+    .row:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 16px; }
+    .row:active { background: var(--brand-soft); }
+    .line { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .debt { font-weight: 700; color: var(--debt); white-space: nowrap; }
+    .meta { color: var(--muted); font-size: 14px; }
+    .bar { display: block; height: 8px; border-radius: 4px; background: var(--debt-soft); margin: 10px 0 6px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--paid); border-radius: 4px; }
+    .status-ok { color: var(--paid); font-size: 14px; font-weight: 600; white-space: nowrap; }
+    .status-debt { color: var(--debt); font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+    .search { width: 100%; min-height: 44px; padding: 8px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); }
+
+    .empty { background: var(--surface); border-radius: 16px; padding: 28px 20px; text-align: center; }
+    .empty h2 { font-size: 18px; margin: 0 0 6px; }
+    .empty p { color: var(--muted); margin: 0 0 16px; }
+    .empty .btn { width: auto; padding: 0 20px; }
+
+    /* Buttons and fields */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 48px;
+      border: 0; border-radius: 12px; background: var(--brand); color: var(--brand-ink); font-weight: 600; cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: .6; }
+    .btn.quiet { background: var(--brand-soft); color: var(--brand); }
+    .btn.danger { background: none; color: var(--debt); }
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .dock {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, var(--bg) 70%, transparent);
+    }
+    .dock .btn { max-width: 528px; margin: 0 auto; display: flex; box-shadow: 0 6px 18px rgb(35 80 196 / .3); }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+    .field input, .field select {
+      width: 100%; min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg);
+    }
+    .field input[aria-invalid="true"] { border-color: var(--debt); }
+    .hint { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    .chips button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+    .error { color: var(--debt); font-size: 14px; min-height: 1.4em; margin: 0 0 10px; }
+
+    /* Bottom sheets */
+    dialog {
+      border: 0; padding: 0; width: 100%; max-width: 560px; margin: auto auto 0; max-height: 92dvh;
+      border-radius: 20px 20px 0 0; background: var(--surface); color: var(--ink);
+    }
+    dialog::backdrop { background: rgb(8 12 26 / .55); }
+    dialog[open] { animation: rise .22s ease-out; }
+    @keyframes rise { from { transform: translateY(24px); opacity: 0; } }
+    @media (min-width: 640px) { dialog { margin: auto; border-radius: 20px; } }
+    @media (prefers-reduced-motion: reduce) { dialog[open] { animation: none; } }
+    .sheet { padding: 8px 20px calc(20px + env(safe-area-inset-bottom)); }
+    .sheet::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 12px; }
+    .sheet-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; margin-bottom: 16px; }
+    .sheet-head h2 { margin: 0; font-size: 20px; }
+    .close { border: 0; background: var(--bg); width: 36px; height: 36px; border-radius: 50%; font-size: 20px; cursor: pointer; flex: none; }
+    .facts { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0 0 16px; }
+    .facts dt { color: var(--muted); }
+    .facts dd { margin: 0; text-align: right; }
+    .facts a { color: var(--brand); }
+    .history { list-style: none; padding: 0; margin: 0 0 16px; border: 1px solid var(--line); border-radius: 12px; }
+    .history li { display: flex; justify-content: space-between; padding: 10px 14px; border-top: 1px solid var(--line); }
+    .history li:first-child { border-top: 0; }
+    .history .none { color: var(--muted); justify-content: center; }
+    .actions { display: grid; gap: 8px; }
+    h3 { font-size: 15px; margin: 0 0 8px; color: var(--muted); font-weight: 600; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px);
+      background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; font-size: 15px;
+      opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 20; width: max-content; max-width: calc(100% - 32px);
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
-<main>
-  <h1>Учёт оплат</h1>
-
-  <section aria-labelledby="debtors-title">
-    <div class="row" style="margin-bottom:12px">
-      <div>
-        <label for="month">Месяц</label>
-        <input id="month" type="month" required>
-      </div>
-      <div class="total">
-        <span class="hint" style="margin:0">Общий долг</span>
-        <b id="total">—</b>
-      </div>
+<header>
+  <div class="wrap">
+    <div class="month">
+      <button id="prev" type="button" aria-label="Предыдущий месяц">‹</button>
+      <h1 id="monthLabel">…</h1>
+      <button id="next" type="button" aria-label="Следующий месяц">›</button>
     </div>
-    <h2 id="debtors-title">Должники</h2>
-    <p class="hint">Нажмите на ученика, чтобы внести оплату.</p>
-    <ul id="debtors"></ul>
-  </section>
+    <div class="summary" aria-live="polite">
+      <div class="label">Долг за месяц</div>
+      <div class="total" id="total">—</div>
+      <div class="sub" id="sub">&nbsp;</div>
+    </div>
+  </div>
+</header>
 
-  <section aria-labelledby="pay-title">
-    <h2 id="pay-title">Добавить оплату</h2>
-    <form id="pay" novalidate>
-      <div class="field">
-        <label for="student">Ученик</label>
-        <select id="student" required><option value="">Загрузка…</option></select>
-      </div>
-      <div class="row field">
-        <div>
-          <label for="amount">Сумма, сум</label>
-          <input id="amount" inputmode="numeric" autocomplete="off" placeholder="500 000" required>
-        </div>
-        <div>
-          <label for="date">Дата</label>
-          <input id="date" type="date" required>
-        </div>
-      </div>
-      <button type="submit">Сохранить оплату</button>
-      <p id="msg" class="msg" role="status"></p>
-    </form>
+<div class="tabs">
+  <div class="wrap">
+    <div class="seg" role="tablist">
+      <button type="button" role="tab" id="tab-debtors" aria-controls="debtors" aria-selected="true">Должники</button>
+      <button type="button" role="tab" id="tab-students" aria-controls="students" aria-selected="false">Ученики</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section id="debtors" role="tabpanel" aria-labelledby="tab-debtors"></section>
+  <section id="students" role="tabpanel" aria-labelledby="tab-students" hidden>
+    <input id="search" class="search" type="search" placeholder="Поиск по имени, телефону, группе" aria-label="Поиск учеников">
+    <div id="studentList"></div>
   </section>
 </main>
 
+<div class="dock"><button id="dockBtn" class="btn" type="button">Внести оплату</button></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- Add payment -->
+<dialog id="paySheet" aria-labelledby="payTitle">
+  <form id="payForm" class="sheet" novalidate>
+    <div class="sheet-head"><h2 id="payTitle">Новая оплата</h2><button class="close" type="button" data-close aria-label="Закрыть">×</button></div>
+    <div class="field">
+      <label for="payStudent">Ученик</label>
+      <select id="payStudent" required></select>
+    </div>
+    <div class="field">
+      <label for="payAmount">Сумма, сум</label>
+      <input id="payAmount" inputmode="numeric" autocomplete="off" placeholder="0" required>
+      <div class="chips" id="payChips"></div>
+    </div>
+    <div class="field">
+      <label for="payDate">Дата оплаты</label>
+      <input id="payDate" type="date" required>
+      <div class="hint" id="payDateHint"></div>
+    </div>
+    <p class="error" id="payError" role="alert"></p>
+    <button class="btn" type="submit">Сохранить оплату</button>
+  </form>
+</dialog>
+
+<!-- Student details -->
+<dialog id="studentSheet" aria-labelledby="studentTitle">
+  <div class="sheet">
+    <div class="sheet-head"><h2 id="studentTitle"></h2><button class="close" type="button" data-close aria-label="Закрыть">×</button></div>
+    <dl class="facts" id="studentFacts"></dl>
+    <h3>История оплат</h3>
+    <ul class="history" id="studentHistory"></ul>
+    <div class="actions">
+      <button class="btn" type="button" id="studentPay">Внести оплату</button>
+      <button class="btn quiet" type="button" id="studentEdit">Изменить данные</button>
+      <button class="btn danger" type="button" id="studentDelete">Удалить ученика</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- Create / edit student -->
+<dialog id="formSheet" aria-labelledby="formTitle">
+  <form id="studentForm" class="sheet" novalidate>
+    <div class="sheet-head"><h2 id="formTitle">Новый ученик</h2><button class="close" type="button" data-close aria-label="Закрыть">×</button></div>
+    <div class="field"><label for="fName">Имя и фамилия</label><input id="fName" autocomplete="off" required></div>
+    <div class="field"><label for="fPhone">Телефон</label><input id="fPhone" type="tel" placeholder="+998 90 123 45 67" required></div>
+    <div class="two">
+      <div class="field"><label for="fGroup">Группа</label><input id="fGroup" list="groups" autocomplete="off" required></div>
+      <div class="field"><label for="fFee">В месяц, сум</label><input id="fFee" inputmode="numeric" autocomplete="off" placeholder="500 000" required></div>
+    </div>
+    <datalist id="groups"></datalist>
+    <p class="error" id="formError" role="alert"></p>
+    <button class="btn" type="submit" id="formSubmit">Добавить ученика</button>
+  </form>
+</dialog>
+
 <script>
   const $ = (id) => document.getElementById(id);
-  const money = (n) => n.toLocaleString('ru-RU') + ' сум';
+  const num = new Intl.NumberFormat('ru-RU');
+  const money = (n) => `${num.format(n)} сум`;
   const pad = (n) => String(n).padStart(2, '0');
-  const now = new Date();
-  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const today = isoDate(new Date());
+  const thisMonth = today.slice(0, 7);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const digits = (s) => Number(String(s).replace(/\D/g, ''));
+  const rules = new Intl.PluralRules('ru');
+  const plural = (n, one, few, many) => `${n} ${{ one, few }[rules.select(n)] ?? many}`;
 
-  async function api(path, options) {
-    const res = await fetch(path, { headers: { 'content-type': 'application/json' }, ...options });
-    const body = res.status === 204 ? null : await res.json();
+  const monthName = (m) => {
+    const [y, mo] = m.split('-').map(Number);
+    const name = new Date(y, mo - 1, 1).toLocaleString('ru-RU', { month: 'long' });
+    return `${name[0].toUpperCase()}${name.slice(1)} ${y}`;
+  };
+  const shiftMonth = (m, by) => {
+    const [y, mo] = m.split('-').map(Number);
+    return isoDate(new Date(y, mo - 1 + by, 1)).slice(0, 7);
+  };
+  const lastDay = (m) => {
+    const [y, mo] = m.split('-').map(Number);
+    return `${m}-${pad(new Date(y, mo, 0).getDate())}`;
+  };
+  const longDate = (d) => new Date(`${d}T00:00`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const state = { month: thisMonth, tab: 'debtors', students: [], report: null, error: null, loaded: false, current: null };
+  let loadSeq = 0;
+
+  async function api(path, options = {}) {
+    const res = await fetch(path, { ...options, headers: options.body ? { 'content-type': 'application/json' } : {} });
+    const body = res.status === 204 ? null : await res.json().catch(() => null);
     if (!res.ok) {
-      const detail = body?.details?.map((d) => d.message).join('; ');
-      throw new Error(detail || body?.error || `Ошибка ${res.status}`);
+      const detail = body?.details?.map((d) => `${d.path}: ${d.message}`).join('; ');
+      throw new Error(detail || body?.error || `Сервер ответил ${res.status}`);
     }
     return body;
   }
 
-  async function loadDebtors() {
-    const list = $('debtors');
+  async function load() {
+    const seq = ++loadSeq;
     try {
-      const { total, debtors } = await api(`/debtors?month=${$('month').value}`);
-      $('total').textContent = money(total);
-      list.innerHTML = debtors.length
-        ? debtors.map((d) => `
-            <li><button type="button" data-id="${d.id}" data-debt="${d.debt}">
-              <span class="who"><b>${esc(d.name)}</b><small>${esc(d.group)} · ${esc(d.phone)}</small>
-                <small>оплачено ${money(d.paid)} из ${money(d.monthlyFee)}</small></span>
-              <span class="sum"><b>${money(d.debt)}</b></span>
-            </button></li>`).join('')
-        : '<li class="empty">Должников нет 🎉</li>';
+      const [students, report] = await Promise.all([api('/students'), api(`/debtors?month=${state.month}`)]);
+      if (seq !== loadSeq) return;
+      Object.assign(state, { students, report, error: null, loaded: true });
     } catch (e) {
-      $('total').textContent = '—';
-      list.innerHTML = `<li class="empty">Не удалось загрузить: ${esc(e.message)}</li>`;
+      if (seq !== loadSeq) return;
+      Object.assign(state, { error: e.message, loaded: true });
     }
+    render();
   }
 
-  async function loadStudents() {
-    const students = await api('/students');
-    $('student').innerHTML = '<option value="">Выберите ученика</option>' +
-      students.map((s) => `<option value="${s.id}">${esc(s.name)} — ${esc(s.group)}</option>`).join('');
+  // Students who existed in the viewed month (the API counts debt only for them).
+  const enrolled = () => state.students.filter((s) => s.createdAt <= lastDay(state.month));
+  const debtOf = (id) => state.report?.debtors.find((d) => d.id === id);
+
+  function render() {
+    $('monthLabel').textContent = monthName(state.month);
+    $('next').disabled = state.month >= thisMonth;
+
+    const r = state.report;
+    if (state.error || !r) {
+      $('total').textContent = '—';
+      $('sub').innerHTML = '&nbsp;';
+    } else {
+      const amount = num.format(r.total);
+      $('total').innerHTML = `${amount} <small>сум</small>`;
+      const n = enrolled().length;
+      $('sub').textContent = n === 0
+        ? 'В этом месяце учеников не было'
+        : r.debtors.length === 0
+          ? 'Все оплатили полностью'
+          : `${plural(r.debtors.length, 'должник', 'должника', 'должников')} из ${plural(n, 'ученика', 'учеников', 'учеников')}`;
+    }
+    renderDebtors();
+    renderStudents();
   }
 
-  function showMsg(text, kind) {
-    $('msg').textContent = text;
-    $('msg').className = `msg ${kind}`;
+  function emptyState(title, text, action) {
+    return `<div class="empty"><h2>${title}</h2><p>${text}</p>${action ?? ''}</div>`;
+  }
+  const addStudentBtn = '<button class="btn" type="button" data-action="add-student">Добавить ученика</button>';
+
+  function renderDebtors() {
+    const el = $('debtors');
+    if (!state.loaded) { el.innerHTML = emptyState('Загрузка…', ''); return; }
+    if (state.error) {
+      el.innerHTML = emptyState('Не удалось загрузить данные', esc(state.error),
+        '<button class="btn" type="button" data-action="retry">Повторить</button>');
+      return;
+    }
+    if (state.students.length === 0) {
+      el.innerHTML = emptyState('Пока нет учеников', 'Добавьте первого ученика: имя, группу и сумму оплаты в месяц.', addStudentBtn);
+      return;
+    }
+    const { debtors } = state.report;
+    if (debtors.length === 0) {
+      el.innerHTML = enrolled().length === 0
+        ? emptyState('Нет учеников за этот месяц', 'Долг считается только для учеников, добавленных до конца месяца.')
+        : emptyState('Должников нет', `За ${monthName(state.month).toLowerCase()} все оплатили полностью.`);
+      return;
+    }
+    el.innerHTML = `<ul class="list card">${debtors.map((d) => `
+      <li><button class="row" type="button" data-student="${d.id}">
+        <span class="line"><span class="name">${esc(d.name)}</span><span class="debt">${money(d.debt)}</span></span>
+        <span class="bar" aria-hidden="true"><i style="width:${Math.min(100, (d.paid / d.monthlyFee) * 100)}%"></i></span>
+        <span class="line meta"><span>${esc(d.group)}</span><span>оплачено ${num.format(d.paid)} из ${num.format(d.monthlyFee)}</span></span>
+      </button></li>`).join('')}</ul>`;
   }
 
-  $('debtors').addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-id]');
-    if (!btn) return;
-    $('student').value = btn.dataset.id;
-    $('amount').value = Number(btn.dataset.debt).toLocaleString('ru-RU');
-    showMsg('', '');
-    $('pay').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    $('amount').focus({ preventScroll: true });
+  function renderStudents() {
+    const el = $('studentList');
+    const q = $('search').value.trim().toLowerCase();
+    $('search').hidden = state.students.length === 0;
+    if (state.students.length === 0) {
+      el.innerHTML = state.loaded && !state.error
+        ? emptyState('Пока нет учеников', 'Здесь появятся все ученики по группам.', addStudentBtn) : '';
+      return;
+    }
+    const list = state.students.filter((s) => !q || `${s.name} ${s.phone} ${s.group}`.toLowerCase().includes(q));
+    if (list.length === 0) { el.innerHTML = emptyState('Никого не нашли', 'Проверьте написание или очистите поиск.'); return; }
+
+    const groups = new Map();
+    for (const s of list) groups.set(s.group, [...(groups.get(s.group) ?? []), s]);
+    el.innerHTML = [...groups.keys()].sort((a, b) => a.localeCompare(b, 'ru')).map((g) => `
+      <h2 class="group-name">${esc(g)}</h2>
+      <ul class="list card">${groups.get(g).map((s) => {
+        const d = debtOf(s.id);
+        const status = s.createdAt > lastDay(state.month) ? ''
+          : d ? `<span class="status-debt">долг ${num.format(d.debt)}</span>` : '<span class="status-ok">оплачено</span>';
+        return `<li><button class="row" type="button" data-student="${s.id}">
+          <span class="line"><span class="name">${esc(s.name)}</span>${status}</span>
+          <span class="line meta"><span>${esc(s.phone)}</span><span>${num.format(s.monthlyFee)} в мес.</span></span>
+        </button></li>`;
+      }).join('')}</ul>`).join('');
+  }
+
+  function setTab(tab) {
+    state.tab = tab;
+    for (const t of ['debtors', 'students']) {
+      $(`tab-${t}`).setAttribute('aria-selected', String(t === tab));
+      $(t).hidden = t !== tab;
+    }
+    $('dockBtn').textContent = tab === 'debtors' ? 'Внести оплату' : 'Добавить ученика';
+  }
+
+  let toastTimer;
+  function toast(text) {
+    $('toast').textContent = text;
+    $('toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800);
+  }
+
+  // Formats "500000" as "500 000" while typing.
+  function moneyInput(input) {
+    input.addEventListener('input', () => {
+      const n = digits(input.value);
+      input.value = n ? num.format(n) : '';
+      input.removeAttribute('aria-invalid');
+    });
+  }
+  moneyInput($('payAmount'));
+  moneyInput($('fFee'));
+
+  // ---- Payment sheet ----
+  function openPay(studentId) {
+    if (state.students.length === 0) { openStudentForm(); return; }
+    $('payStudent').innerHTML = '<option value="">Выберите ученика</option>' + state.students
+      .map((s) => `<option value="${s.id}">${esc(s.name)} (${esc(s.group)})</option>`).join('');
+    $('payStudent').value = studentId ?? '';
+    $('payDate').max = today;
+    $('payDate').value = state.month === thisMonth ? today : lastDay(state.month);
+    $('payError').textContent = '';
+    fillPayAmount();
+    updateDateHint();
+    $('paySheet').showModal();
+    if (!studentId) $('payStudent').focus(); else $('payAmount').focus();
+  }
+
+  function fillPayAmount() {
+    const s = state.students.find((x) => x.id === Number($('payStudent').value));
+    const d = s && debtOf(s.id);
+    $('payAmount').value = d ? num.format(d.debt) : '';
+    const chips = [];
+    if (d) chips.push([d.debt, `Весь долг ${num.format(d.debt)}`]);
+    if (s && (!d || d.debt !== s.monthlyFee) && s.monthlyFee > 0) chips.push([s.monthlyFee, `За месяц ${num.format(s.monthlyFee)}`]);
+    $('payChips').innerHTML = chips.map(([v, t]) => `<button type="button" data-amount="${v}">${t}</button>`).join('');
+  }
+
+  function updateDateHint() {
+    const d = $('payDate').value;
+    $('payDateHint').textContent = d ? `Оплата засчитается за ${monthName(d.slice(0, 7)).toLowerCase()}` : '';
+  }
+
+  $('payStudent').addEventListener('change', fillPayAmount);
+  $('payDate').addEventListener('change', updateDateHint);
+  $('payChips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-amount]');
+    if (b) $('payAmount').value = num.format(Number(b.dataset.amount));
   });
 
-  $('pay').addEventListener('submit', async (e) => {
+  $('payForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const studentId = $('student').value;
-    const amount = Number($('amount').value.replace(/\D/g, ''));
-    if (!studentId) return showMsg('Выберите ученика', 'err');
-    if (!amount) return showMsg('Введите сумму больше нуля', 'err');
+    const id = Number($('payStudent').value);
+    const amount = digits($('payAmount').value);
+    const date = $('payDate').value;
+    if (!id) return showError('payError', 'Выберите ученика', $('payStudent'));
+    if (!amount) return showError('payError', 'Введите сумму больше нуля', $('payAmount'));
+    if (!date) return showError('payError', 'Укажите дату оплаты', $('payDate'));
 
-    const submit = e.target.querySelector('button[type=submit]');
+    const submit = e.submitter ?? $('payForm').querySelector('[type=submit]');
     submit.disabled = true;
     try {
-      await api(`/students/${studentId}/payments`, {
-        method: 'POST',
-        body: JSON.stringify({ amount, date: $('date').value || undefined }),
-      });
-      const name = $('student').selectedOptions[0].textContent;
-      showMsg(`Оплата ${money(amount)} сохранена: ${name}`, 'ok');
-      $('student').value = '';
-      $('amount').value = '';
-      $('date').value = todayStr;
-      await loadDebtors();
+      await api(`/students/${id}/payments`, { method: 'POST', body: JSON.stringify({ amount, date }) });
+      const s = state.students.find((x) => x.id === id);
+      $('paySheet').close();
+      toast(`Оплата сохранена: ${s?.name ?? ''}, ${money(amount)}`);
+      await load();
     } catch (err) {
-      showMsg(err.message, 'err');
+      showError('payError', err.message);
     } finally {
       submit.disabled = false;
     }
   });
 
-  $('month').addEventListener('change', loadDebtors);
+  function showError(id, text, field) {
+    $(id).textContent = text;
+    if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
+  }
 
-  $('month').value = todayStr.slice(0, 7);
-  $('date').value = todayStr;
-  loadDebtors();
-  loadStudents().catch((e) => showMsg(`Не удалось загрузить учеников: ${e.message}`, 'err'));
+  // ---- Student details sheet ----
+  async function openStudent(id) {
+    const s = state.students.find((x) => x.id === id);
+    if (!s) return;
+    state.current = s;
+    const d = debtOf(id);
+    const inMonth = s.createdAt <= lastDay(state.month);
+    $('studentTitle').textContent = s.name;
+    $('studentFacts').innerHTML = `
+      <dt>Группа</dt><dd>${esc(s.group)}</dd>
+      <dt>Телефон</dt><dd><a href="tel:${esc(s.phone)}">${esc(s.phone)}</a></dd>
+      <dt>В месяц</dt><dd>${money(s.monthlyFee)}</dd>
+      ${inMonth ? `<dt>${esc(monthName(state.month))}</dt><dd>${d
+        ? `<span class="status-debt">долг ${money(d.debt)}</span>`
+        : '<span class="status-ok">оплачено</span>'}</dd>` : ''}`;
+    $('studentHistory').innerHTML = '<li class="none">Загрузка…</li>';
+    $('studentSheet').showModal();
+    try {
+      const payments = await api(`/students/${id}/payments`);
+      if (state.current?.id !== id) return;
+      $('studentHistory').innerHTML = payments.length
+        ? payments.map((p) => `<li><span>${longDate(p.date)}</span><b>${money(p.amount)}</b></li>`).join('')
+        : '<li class="none">Оплат ещё не было</li>';
+    } catch (e) {
+      $('studentHistory').innerHTML = `<li class="none">${esc(e.message)}</li>`;
+    }
+  }
+
+  $('studentPay').addEventListener('click', () => {
+    $('studentSheet').close();
+    openPay(state.current.id);
+  });
+  $('studentEdit').addEventListener('click', () => {
+    $('studentSheet').close();
+    openStudentForm(state.current);
+  });
+  $('studentDelete').addEventListener('click', async () => {
+    const s = state.current;
+    if (!confirm(`Удалить ученика ${s.name}? История оплат сохранится.`)) return;
+    try {
+      await api(`/students/${s.id}`, { method: 'DELETE' });
+      $('studentSheet').close();
+      toast(`Ученик удалён: ${s.name}`);
+      await load();
+    } catch (e) {
+      toast(e.message);
+    }
+  });
+
+  // ---- Create / edit student sheet ----
+  let editing = null;
+  function openStudentForm(student = null) {
+    editing = student;
+    $('formTitle').textContent = student ? 'Изменить данные' : 'Новый ученик';
+    $('formSubmit').textContent = student ? 'Сохранить изменения' : 'Добавить ученика';
+    $('fName').value = student?.name ?? '';
+    $('fPhone').value = student?.phone ?? '';
+    $('fGroup').value = student?.group ?? '';
+    $('fFee').value = student ? num.format(student.monthlyFee) : '';
+    $('formError').textContent = '';
+    for (const f of ['fName', 'fPhone', 'fGroup', 'fFee']) $(f).removeAttribute('aria-invalid');
+    $('groups').innerHTML = [...new Set(state.students.map((s) => s.group))].map((g) => `<option value="${esc(g)}">`).join('');
+    $('formSheet').showModal();
+    $('fName').focus();
+  }
+
+  $('studentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = {
+      name: $('fName').value.trim(),
+      phone: $('fPhone').value.trim(),
+      group: $('fGroup').value.trim(),
+      monthlyFee: digits($('fFee').value),
+    };
+    if (!input.name) return showError('formError', 'Введите имя ученика', $('fName'));
+    if (!/^\+?[\d\s()-]{5,20}$/.test(input.phone)) return showError('formError', 'Телефон: только цифры, например +998 90 123 45 67', $('fPhone'));
+    if (!input.group) return showError('formError', 'Укажите группу', $('fGroup'));
+    if (!$('fFee').value.trim()) return showError('formError', 'Укажите сумму оплаты в месяц', $('fFee'));
+
+    const submit = $('formSubmit');
+    submit.disabled = true;
+    try {
+      const saved = editing
+        ? await api(`/students/${editing.id}`, { method: 'PATCH', body: JSON.stringify(input) })
+        : await api('/students', { method: 'POST', body: JSON.stringify(input) });
+      $('formSheet').close();
+      toast(editing ? `Изменения сохранены: ${saved.name}` : `Ученик добавлен: ${saved.name}`);
+      await load();
+    } catch (err) {
+      showError('formError', err.message);
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  // ---- Wiring ----
+  for (const dlg of document.querySelectorAll('dialog')) {
+    // Click on the backdrop (outside the sheet content) closes it.
+    dlg.addEventListener('click', (e) => { if (e.target === dlg || e.target.closest('[data-close]')) dlg.close(); });
+  }
+
+  document.addEventListener('click', (e) => {
+    const row = e.target.closest('[data-student]');
+    if (row) return openStudent(Number(row.dataset.student));
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    if (action === 'add-student') openStudentForm();
+    if (action === 'retry') load();
+  });
+
+  $('tab-debtors').addEventListener('click', () => setTab('debtors'));
+  $('tab-students').addEventListener('click', () => setTab('students'));
+  $('dockBtn').addEventListener('click', () => (state.tab === 'debtors' ? openPay() : openStudentForm()));
+  $('search').addEventListener('input', renderStudents);
+  $('prev').addEventListener('click', () => { state.month = shiftMonth(state.month, -1); load(); });
+  $('next').addEventListener('click', () => { state.month = shiftMonth(state.month, 1); load(); });
+
+  render();
+  load();
 </script>
 </body>
 </html>
